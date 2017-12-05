@@ -103,7 +103,52 @@ class User(MyDocType):
         return user
 
 
-class Sensor(MyDocType):
-    device_id = Text()
+class Customer(MyDocType):
+    """
+    Customer
+    """
     created_at = Date()
     updated_at = Date()
+    last_name = Text()
+    first_name = Text()
+    bluetooth_mac_address = Text()
+    email = Text()
+    phone_number = Text()
+
+    class Meta:
+        index = 'bluetooth'
+
+
+class Deal(MyDocType):
+    created_at = Date()
+    updated_at = Date()
+    label = Text()
+    description = Text()
+    start_at = Date()
+    end_at = Date()
+
+    class Meta:
+        index = 'bluetooth'
+
+
+class Sensor(MyDocType):
+    created_at = Date()
+    updated_at = Date()
+    pos_x = Integer()
+    pos_y = Integer()
+    radius = Integer()
+    mqtt_token = Text()
+    key = Text()
+
+    class Meta:
+        index = 'bluetooth'
+
+    def hash_key(self, key):
+        """
+        Set new device key
+
+        :param key: New key to hash
+        :type key: str
+        """
+        self.key = hash_sha256(key)
+
