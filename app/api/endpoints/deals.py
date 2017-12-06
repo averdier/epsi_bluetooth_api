@@ -56,7 +56,7 @@ class DealCollection(Resource):
         """
         Return deal list
         """
-        pass
+        return {'deals': [deal.to_dict(include_id=True) for deal in Deal.search().execute()]}
 
     @ns.marshal_with(deal_minimal, code=201, description='Deal successfully added.')
     @ns.doc(response={
@@ -67,7 +67,20 @@ class DealCollection(Resource):
         """
         Add deal
         """
-        pass
+        data = request.json
+
+        deal = Deal(
+            label=data['label'],
+            start_at=data['start_at'],
+            end_at=data['end_at']
+        )
+
+        if data.get('description', None) is not None:
+            deal.description = data['description']
+
+        deal.save()
+
+        return deal.to_dict(include_id=True), 201
 
 
 @ns.route('/<id>')
@@ -80,7 +93,12 @@ class DealItem(Resource):
         """
         Get deal
         """
-        pass
+        deal = Deal.get(id=id, ignore=404)
+
+        if deal is None:
+            abort(404, 'Deal not found.')
+
+        return deal.to_dict(include_id=True)
 
     @ns.response(204, 'Deal successfully patched.')
     @ns.expect(deal_patch)
@@ -88,10 +106,49 @@ class DealItem(Resource):
         """
         Patch deal
         """
-        pass
+        deal = Deal.get(id=id, ignore=404)
+
+        if deal is None:
+            abort(404, 'Deal not found.')
+
+        data = request.json
+        updated = True
+
+        if data.get('label', None) is not None:
+            deal.label = data['label']
+            updated = True
+
+        if data.get('description', None) is not None:
+            deal.description = data['description']
+            updated = True
+
+        if data.get('start_at', None) is not None:
+            deal.start_at = data['start_at']
+            updated = True
+
+        if data.get('end_at', None) is not None:
+            deal.end_at = data['end_at']
+            updated = True
+
+        if updated:
+            deal.update()
+
+        return 'Deal successfully patched.', 204
 
     @ns.response(204, 'Deal successfully deleted.')
     def delete(self, id):
         """
         Delete deal
         """
+
+        deal = Deal.get(id=id, ignore=404)
+
+        if deal is None:
+            abort(404, 'Deal not found.')
+
+        deal.delete()
+
+        if Deal.get(id=id, ignore=404) is not None:
+            abort(400, error='Unable to delete deal.')
+
+        return 'Deal successfully deleted.', 204

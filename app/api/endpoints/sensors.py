@@ -56,7 +56,7 @@ class SensorCollection(Resource):
         """
         Return sensor list
         """
-        pass
+        return {'sensors': [sensor.to_dict(include_id=True) for sensor in Sensor.search().execute()]}
 
     @ns.marshal_with(sensor_minimal, code=201, description='Sensor successfully added.')
     @ns.doc(response={
@@ -67,7 +67,25 @@ class SensorCollection(Resource):
         """
         Add sensor
         """
-        pass
+        data = request.json
+
+        if Sensor.get(id=data['device_id'], ignore=404) is not None:
+            abort(400, error='Device id already exist.')
+
+        sensor = Sensor(
+            pos_x=data['pos_x'],
+            pos_y=data['pos_y'],
+            radius=data['radius']
+        )
+        sensor.hash_key(data['key'])
+        sensor.meta.id = data['device_id']
+
+        if data.get('mqtt_token', None) is not None:
+            sensor.mqtt_token = data['mqtt_token']
+
+        sensor.save()
+
+        return sensor.to_dict(include_id=True), 201
 
 
 @ns.route('/<id>')
@@ -80,7 +98,12 @@ class SensorItem(Resource):
         """
         Get sensor
         """
-        pass
+        sensor = Sensor.get(id=id, ignore=404)
+
+        if sensor is None:
+            abort(404, 'Sensor not found.')
+
+        return sensor.to_dict(include_id=True)
 
     @ns.response(204, 'Sensor successfully patched.')
     @ns.expect(sensor_patch)
@@ -88,10 +111,53 @@ class SensorItem(Resource):
         """
         Patch sensor
         """
-        pass
+        sensor = Sensor.get(id=id, ignore=404)
+
+        if sensor is None:
+            abort(404, 'Sensor not found.')
+
+        data = request.json
+
+        updated = False
+        if data.get('mqtt_token', None) is not None:
+            sensor.mqtt_token = data['mqtt_token']
+            updated = True
+
+        if data.get('key', None) is not None:
+            sensor.hash_key(data['key'])
+            updated = True
+
+        if data.get('pos_x', None) is not None:
+            sensor.pos_x = data['pos_x']
+            updated = True
+
+        if data.get('pos_y', None) is not None:
+            sensor.pos_y = data['pos_y']
+            updated = True
+
+        if data.get('radius', None) is not None:
+            sensor.radius = data['radius']
+            updated = True
+
+        if updated:
+            sensor.update()
+
+        return 'Sensor successfully patched.', 204
 
     @ns.response(204, 'Sensor successfully deleted.')
     def delete(self, id):
         """
         Delete sensor
         """
+
+        sensor = User.get(id=id, ignore=404)
+
+        if sensor is None:
+            abort(404, 'User not found.')
+
+        sensor.delete()
+
+        if Sensor.get(id=id, ignore=404) is not None:
+            abort(400, error='Unable to delete sensor.')
+
+        return 'Sensor successfully deleted.', 204

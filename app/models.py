@@ -8,6 +8,9 @@ from .utils import hash_sha256
 
 
 class MyDocType(DocType):
+    created_at = Date()
+    updated_at = Date()
+
     def to_dict(self, include_id=False, include_meta=False):
         base = super().to_dict(include_meta)
 
@@ -16,14 +19,20 @@ class MyDocType(DocType):
 
         return base
 
+    def save(self, **kwargs):
+        self.created_at = datetime.utcnow()
+        return super().save(**kwargs)
+
+    def update(self, using=None, index=None, **fields):
+        self.updated_at = datetime.utcnow()
+        return super().update(using, index, **fields)
+
 
 class User(MyDocType):
     """
     User of API
     """
 
-    created_at = Date()
-    updated_at = Date()
     username = Text()
     password = Text()
     email = Text()
@@ -107,8 +116,6 @@ class Customer(MyDocType):
     """
     Customer
     """
-    created_at = Date()
-    updated_at = Date()
     last_name = Text()
     first_name = Text()
     bluetooth_mac_address = Text()
@@ -120,8 +127,6 @@ class Customer(MyDocType):
 
 
 class Deal(MyDocType):
-    created_at = Date()
-    updated_at = Date()
     label = Text()
     description = Text()
     start_at = Date()
@@ -132,8 +137,6 @@ class Deal(MyDocType):
 
 
 class Sensor(MyDocType):
-    created_at = Date()
-    updated_at = Date()
     pos_x = Integer()
     pos_y = Integer()
     radius = Integer()

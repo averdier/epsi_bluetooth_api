@@ -56,7 +56,7 @@ class UserCollection(Resource):
         """
         Return user list
         """
-        pass
+        return {'users': [user.to_dict(include_id=True) for user in User.search().execute()]}
 
     @ns.marshal_with(user_minimal, code=201, description='User successfully added.')
     @ns.doc(response={
@@ -67,11 +67,26 @@ class UserCollection(Resource):
         """
         Add user
         """
-        pass
+        data = request.json
+
+        if len(User.search().query('match', username=data['username']).execute()) != 0:
+            abort(400, error='Username already exist.')
+
+        if len(User.search().query('match', email=data['email']).execute) != 0:
+            abort(400, error='Email already exist.')
+
+        user = User(
+            username=data['username'],
+            email=data['email']
+        )
+        user.hash_password(data['password'])
+        user.save()
+
+        return user.to_dict(include_id=True), 201
 
 
 @ns.route('/<id>')
-@ns.response(404, 'User not found')
+@ns.response(404, 'User not found.')
 class UserItem(Resource):
     decorators = [auth.login_required]
 
@@ -80,7 +95,12 @@ class UserItem(Resource):
         """
         Get user
         """
-        pass
+        user = User.get(id=id, ignore=404)
+
+        if user is None:
+            abort(404, 'User not found.')
+
+        return user.to_dict(include_id=True)
 
     @ns.response(204, 'User successfully patched.')
     @ns.expect(user_patch)
@@ -88,10 +108,47 @@ class UserItem(Resource):
         """
         Patch user
         """
-        pass
+        user = User.get(id=id, ignore=404)
+
+        if user is None:
+            abort(404, 'User not found.')
+
+        data = request.json
+
+        updated = False
+        if data.get('password', None) is not None:
+            user.hash_password(data['password'])
+            updated = True
+
+        if data.get('email', None) is not None:
+            user_search = User.search().query('match', email=data['email']).execute()
+
+            if len(user_search) > 0:
+                if user_search.hits[0].meta.id != id:
+                    abort(400, error='Email already exist.')
+
+            user.email = data['email']
+            updated = True
+
+        if updated:
+            user.update()
+
+        return 'User successfully patched.', 204
 
     @ns.response(204, 'User successfully deleted.')
     def delete(self, id):
         """
         Delete user
         """
+
+        user = User.get(id=id, ignore=404)
+
+        if user is None:
+            abort(404, 'User not found.')
+
+        user.delete()
+
+        if User.get(id=id, ignore=404) is not None:
+            abort(400, error='Unable to delete user.')
+
+        return 'User successfully deleted.', 204
