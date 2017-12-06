@@ -29,7 +29,7 @@ sensor_minimal = api.model('Sensor minimal', {
 })
 
 sensor_detail = api.inherit('Sensor', sensor_minimal, {
-    'mqtt_token': fields.Url(required=True, description='MQTT token')
+    'mqtt_token': fields.String(required=True, description='MQTT token'),
 })
 
 sensor_data_container = api.inherit('Sensor data container', {
