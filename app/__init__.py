@@ -24,6 +24,9 @@ def create_app(config_name='default'):
     from app.models import User, Customer, Deal, Sensor
     with app.app_context():
         User.init()
+        Customer.init()
+        Deal.init()
+        Sensor.init()
 
         user_search = User.search().execute()
 
