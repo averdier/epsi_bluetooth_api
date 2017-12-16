@@ -25,6 +25,6 @@ send_task_parameters = api.model('Send task parameters', {
 
 send_task_response = api.model('Send task response', {
     'task_id': fields.String(required=True, description='Task id'),
-    'uri': fields.Url('manage.tasks_send_deal_task_status', required=True, description='Task status uri')
+    'uri': fields.Url('api.tasks_send_deal_task_status', required=True, description='Task status uri')
 })
 

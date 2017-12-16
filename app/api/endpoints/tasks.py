@@ -64,7 +64,15 @@ class SendDealTask(Resource):
         if deal is None:
             abort(404, 'Deal not found')
 
-        pass
+        from app.tasks import send_deal
+
+        data['deal'] = {
+            'label': deal.label,
+            'description': deal.description
+        }
+        task = send_deal.apply_async(args=[data])
+
+        return {'task_id': task.id}, 201
 
 
 @ns.route('/deals/send/<task_id>')
@@ -77,4 +85,17 @@ class SendDealTaskStatus(Resource):
         """
         Send task status
         """
-        pass
+        from app.tasks import send_deal
+
+        task = send_deal.AsyncResult(task_id)
+
+        if task is None:
+            abort(404, 'Task not found.')
+
+        return {
+                'status': task.info.get('status'),
+                'state': task.state,
+                'current': task.info.get('current', 0),
+                'total': task.info.get('total', 0),
+                'message': task.info.get('message', '')
+            }

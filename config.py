@@ -17,6 +17,14 @@ class Config:
     CELERY_BROKER_URL = 'redis://vps475171.ovh.net:6379/0'
     CELERY_RESULT_BACKEND = 'redis://vps475171.ovh.net:6379/0'
 
+    MAIL_SERVER = 'smtp.googlemail.com'
+    MAIL_PORT = 465
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = ''
+    MAIL_PASSWORD = ''
+    MAIL_DEFAULT_SENDER = ''
+
     @staticmethod
     def init_app(app):
         """

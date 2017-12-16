@@ -1,8 +1,43 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask
+from celery import Celery
 from config import config
 from elasticsearch_dsl.connections import connections
+from .extensions import mail
+
+CELERY_TASK_LIST = [
+    'app.tasks'
+]
+
+
+def create_celery_app(app=None, config_name='default'):
+    """
+    Create Celery app
+
+    :param app:
+    :param config_name:
+
+    :return: Celery app
+    """
+    app = app or create_app(config_name)
+    celery = Celery(
+        app.import_name,
+        broker=app.config['CELERY_BROKER_URL'],
+        include=CELERY_TASK_LIST
+    )
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
 
 
 def create_app(config_name='default'):
@@ -38,4 +73,10 @@ def create_app(config_name='default'):
 
     app.register_blueprint(api_blueprint)
 
+    extensions(app)
+
     return app
+
+
+def extensions(app):
+    mail.init_app(app)
