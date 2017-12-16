@@ -131,7 +131,7 @@ class UserItem(Resource):
             updated = True
 
         if updated:
-            user.update()
+            user.save()
 
         return 'User successfully patched.', 204
 

@@ -150,7 +150,7 @@ class SensorItem(Resource):
             updated = True
 
         if updated:
-            sensor.update()
+            sensor.save()
 
         return 'Sensor successfully patched.', 204
 

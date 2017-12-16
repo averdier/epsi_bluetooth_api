@@ -161,7 +161,7 @@ class CustomerItem(Resource):
             updated = True
 
         if updated:
-            customer.update()
+            customer.save()
 
         return 'Customer successfully patched.', 204
 

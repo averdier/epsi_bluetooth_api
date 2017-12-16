@@ -131,7 +131,7 @@ class DealItem(Resource):
             updated = True
 
         if updated:
-            deal.update()
+            deal.save()
 
         return 'Deal successfully patched.', 204
 
