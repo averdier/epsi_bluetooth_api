@@ -3,7 +3,7 @@
 from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired
 from flask import current_app
-from elasticsearch_dsl import DocType, Date, Text, Integer, Keyword, InnerObjectWrapper, Object
+from elasticsearch_dsl import DocType, Date, Text, Integer, Keyword, InnerObjectWrapper, Object, Float, Nested
 from .utils import hash_sha256
 
 
@@ -22,10 +22,6 @@ class MyDocType(DocType):
     def save(self, **kwargs):
         self.created_at = datetime.utcnow()
         return super().save(**kwargs)
-
-    def update(self, using=None, index=None, **fields):
-        self.updated_at = datetime.utcnow()
-        return super().update(using, index, **fields)
 
 
 class User(MyDocType):
@@ -216,3 +212,27 @@ class Device(MyDocType):
         :type key: str
         """
         self.key = hash_sha256(key)
+
+
+class SensorData(InnerObjectWrapper):
+    """
+    Inner object
+    """
+
+
+class BluetoothLog(MyDocType):
+    start_timestamp = Float()
+    end_timestamp = Float()
+    mac = Keyword()
+    sensors_data = Nested(
+        doc_class=SensorData,
+        properties={
+            'device_id': Keyword(),
+            'rssi': Integer(),
+            'start_timestamp': Float(),
+            'end_timestamp': Float()
+        }
+    )
+
+    class Meta:
+        index = 'bluetooth'

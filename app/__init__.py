@@ -21,12 +21,13 @@ def create_app(config_name='default'):
 
     connections.create_connection(hosts=[config[config_name].ELASTICSEARCH_HOST], timeout=20)
 
-    from app.models import User, Customer, Deal, Device
+    from app.models import User, Customer, Deal, Device, BluetoothLog
     with app.app_context():
         User.init()
         Customer.init()
         Deal.init()
         Device.init()
+        BluetoothLog.init()
 
         user_search = User.search().execute()
 
