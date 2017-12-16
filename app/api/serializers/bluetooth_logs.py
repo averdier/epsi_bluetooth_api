@@ -20,5 +20,5 @@ bluetooth_log_minimal = api.model('Bluetooth log minimal', {
 
 
 bluetooth_log_data_container = api.model('Bluetooth log data container', {
-    'logs': fields.Nested(bluetooth_log_minimal, required=True, description='Bluetooth logs')
+    'logs': fields.List(fields.Nested(bluetooth_log_minimal), required=True, description='Bluetooth logs')
 })
