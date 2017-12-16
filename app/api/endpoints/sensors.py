@@ -3,8 +3,9 @@
 from flask import g, request
 from flask_restplus import Namespace, Resource, abort
 from flask_httpauth import HTTPTokenAuth
+from elasticsearch_dsl import Q
 from ..serializers.sensors import sensor_data_container, sensor_post, sensor_patch, sensor_minimal, sensor_detail
-from app.models import User, Sensor
+from app.models import User, Device
 
 ns = Namespace('sensors', description='Sensors related operations')
 
@@ -56,7 +57,8 @@ class SensorCollection(Resource):
         """
         Return sensor list
         """
-        return {'sensors': [sensor.to_dict(include_id=True) for sensor in Sensor.search().execute()]}
+        return {'sensors': [sensor.to_dict(include_id=True) for sensor
+                            in Device.search().query('term', device_type='sensor').execute()]}
 
     @ns.marshal_with(sensor_minimal, code=201, description='Sensor successfully added.')
     @ns.doc(response={
@@ -69,20 +71,22 @@ class SensorCollection(Resource):
         """
         data = request.json
 
-        if Sensor.get(id=data['device_id'], ignore=404) is not None:
-            abort(400, error='Device id already exist.')
+        if len(Device.search().query('term', **{'mqtt_account.username': data['mqtt_account']['username']}).execute()) != 0:
+            abort(400, error='MQTT username already exist.')
 
-        sensor = Sensor(
+        sensor = Device(
+            device_type='sensor',
             pos_x=data['pos_x'],
             pos_y=data['pos_y'],
             radius=data['radius']
         )
         sensor.hash_key(data['key'])
-        sensor.meta.id = data['device_id']
 
-        if data.get('mqtt_token', None) is not None:
-            sensor.mqtt_token = data['mqtt_token']
+        data['mqtt_account']['clients_topic'] = 'bluetooth/sensor/' + data['mqtt_account']['username'] + '/from_clients'
+        data['mqtt_account']['device_topic'] = 'bluetooth/sensor/' + data['mqtt_account']['username'] + '/from_device'
 
+        sensor.set_mqtt_account(data['mqtt_account'])
+        sensor.meta.id = 'sensor_' + str(Device.search().count() + 1)
         sensor.save()
 
         return sensor.to_dict(include_id=True), 201
@@ -98,7 +102,7 @@ class SensorItem(Resource):
         """
         Get sensor
         """
-        sensor = Sensor.get(id=id, ignore=404)
+        sensor = Device.get(id=id, ignore=404)
 
         if sensor is None:
             abort(404, 'Sensor not found.')
@@ -111,7 +115,7 @@ class SensorItem(Resource):
         """
         Patch sensor
         """
-        sensor = Sensor.get(id=id, ignore=404)
+        sensor = Device.get(id=id, ignore=404)
 
         if sensor is None:
             abort(404, 'Sensor not found.')
@@ -119,9 +123,15 @@ class SensorItem(Resource):
         data = request.json
 
         updated = False
-        if data.get('mqtt_token', None) is not None:
-            sensor.mqtt_token = data['mqtt_token']
-            updated = True
+        if data.get('mqtt_account', None) is not None:
+
+            if data['mqtt_account'].get('username'):
+                sensor_search = Device.search().query('term', **{'mqtt_account.username': data['mqtt_account']['username']}).execute()
+
+                if len(sensor_search) != 0 and sensor_search.hits[0].meta.id != sensor.meta.id:
+                    abort(400, error='MQTT username already exist.')
+            if sensor.update_mqtt_account(data['mqtt_account']):
+                updated = True
 
         if data.get('key', None) is not None:
             sensor.hash_key(data['key'])
@@ -153,11 +163,11 @@ class SensorItem(Resource):
         sensor = User.get(id=id, ignore=404)
 
         if sensor is None:
-            abort(404, 'User not found.')
+            abort(404, 'Sensor not found.')
 
         sensor.delete()
 
-        if Sensor.get(id=id, ignore=404) is not None:
+        if Device.get(id=id, ignore=404) is not None:
             abort(400, error='Unable to delete sensor.')
 
         return 'Sensor successfully deleted.', 204

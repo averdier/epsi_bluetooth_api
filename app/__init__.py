@@ -21,12 +21,12 @@ def create_app(config_name='default'):
 
     connections.create_connection(hosts=[config[config_name].ELASTICSEARCH_HOST], timeout=20)
 
-    from app.models import User, Customer, Deal, Sensor
+    from app.models import User, Customer, Deal, Device
     with app.app_context():
         User.init()
         Customer.init()
         Deal.init()
-        Sensor.init()
+        Device.init()
 
         user_search = User.search().execute()
 

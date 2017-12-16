@@ -3,7 +3,7 @@
 from datetime import datetime
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired
 from flask import current_app
-from elasticsearch_dsl import DocType, Date, Text, Integer
+from elasticsearch_dsl import DocType, Date, Text, Integer, Keyword, InnerObjectWrapper, Object
 from .utils import hash_sha256
 
 
@@ -33,9 +33,9 @@ class User(MyDocType):
     User of API
     """
 
-    username = Text()
-    password = Text()
-    email = Text()
+    username = Keyword()
+    password = Keyword()
+    email = Keyword()
 
     class Meta:
         index = 'bluetooth'
@@ -118,9 +118,9 @@ class Customer(MyDocType):
     """
     last_name = Text()
     first_name = Text()
-    bluetooth_mac_address = Text()
-    email = Text()
-    phone_number = Text()
+    bluetooth_mac_address = Keyword()
+    email = Keyword()
+    phone_number = Keyword()
 
     class Meta:
         index = 'bluetooth'
@@ -136,15 +136,77 @@ class Deal(MyDocType):
         index = 'bluetooth'
 
 
-class Sensor(MyDocType):
+class MQTTAccount(InnerObjectWrapper):
+    """
+    MQTT Account wrapper
+    """
+
+
+class Device(MyDocType):
+    device_type = Keyword()
     pos_x = Integer()
     pos_y = Integer()
     radius = Integer()
-    mqtt_token = Text()
-    key = Text()
+    key = Keyword()
+    mqtt_account = Object(
+        doc_class=MQTTAccount,
+        properties={
+            'username': Keyword(),
+            'password': Keyword(),
+            'server': Keyword(),
+            'port': Integer(),
+            'keep_alive': Keyword(),
+            'clients_topic': Keyword(),
+            'response_topic': Keyword()
+        }
+    )
 
     class Meta:
         index = 'bluetooth'
+
+    def set_mqtt_account(self, args):
+        self.mqtt_account = {
+            'username': args['username'],
+            'password': args['password'],
+            'server': args['server'],
+            'port': args['port'],
+            'keep_alive': args['keep_alive'],
+            'clients_topic': args['clients_topic'],
+            'device_topic': args['device_topic']
+        }
+
+    def update_mqtt_account(self, args):
+        updated = False
+
+        if args.get('username'):
+            self.mqtt_account.username = args['username']
+            updated = True
+
+        if args.get('password'):
+            self.mqtt_account.password = args['password']
+            updated = True
+
+        if args.get('server'):
+            self.mqtt_account.server = args['server']
+            updated = True
+
+        if args.get('port'):
+            self.mqtt_account.port = args['port']
+            updated = True
+
+        if args.get('keep_alive'):
+            self.mqtt_account.keep_alive = args['keep_alive']
+            updated = True
+
+        if args.get('clients_topic'):
+            self.mqtt_account.clients_topic = args['clients_topic']
+            updated = True
+
+        if args.get('device_topic'):
+            self.mqtt_account.device_topic = args['device_topic']
+            updated = True
+
+        return updated
 
     def hash_key(self, key):
         """
@@ -154,4 +216,3 @@ class Sensor(MyDocType):
         :type key: str
         """
         self.key = hash_sha256(key)
-
