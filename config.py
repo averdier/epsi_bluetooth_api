@@ -25,6 +25,10 @@ class Config:
     MAIL_PASSWORD = ''
     MAIL_DEFAULT_SENDER = ''
 
+    NEXMO_KEY = ''
+    NEXMO_SECRET = ''
+    SMS_FROM = ''
+
     @staticmethod
     def init_app(app):
         """

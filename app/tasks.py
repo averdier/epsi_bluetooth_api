@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+import nexmo
 from flask import current_app
 from flask_mail import Message
 from . import create_celery_app
@@ -75,6 +76,28 @@ def send_deal(self, args):
                     )
 
                     conn.send(msg)
+
+    if args['send_options']['sms']:
+        client = nexmo.Client(
+            key=current_app.config['NEXMO_KEY'],
+            secret=current_app.config['NEXMO_SECRET']
+        )
+
+        for number in numbers:
+            response = client.send_message({
+                'from': current_app.config['SMS_FROM'],
+                'to': number,
+                'text': args['deal']['label'] + '\n' + args['deal']['description'] + '\n'
+            })
+
+            response = response['messages'][0]
+
+            if response['status'] == '0':
+                print('Sent message', response['message-id'])
+
+                print('Remaining balance is', response['remaining-balance'])
+            else:
+                print('Error:', response['error-text'])
 
     meta['current'] += 1
     meta['status'] = 'SUCCESS'
