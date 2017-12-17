@@ -33,7 +33,16 @@ def verify_password(username, password):
     :return: True if user can connect, else False
     :rtype: bool
     """
-    user_search = User.search().query('match', username=username).execute()
+    if username is None or password is None:
+        if username is None:
+            print('username is None')
+
+        if password is None:
+            print('password is None')
+
+        return False
+
+    user_search = User.search().query('term', username=username).execute()
 
     if len(user_search) == 0 or not user_search.hits[0].verify_password(password):
         return False
