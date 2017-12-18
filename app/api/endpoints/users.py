@@ -72,7 +72,7 @@ class UserCollection(Resource):
         if len(User.search().query('match', username=data['username']).execute()) != 0:
             abort(400, error='Username already exist.')
 
-        if len(User.search().query('match', email=data['email']).execute) != 0:
+        if len(User.search().query('match', email=data['email']).execute()) != 0:
             abort(400, error='Email already exist.')
 
         user = User(
