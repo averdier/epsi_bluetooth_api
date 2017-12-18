@@ -21,7 +21,7 @@ user_minimal = api.model('User minimal', {
 })
 
 user_detail = api.inherit('User', user_minimal, {
-    'email': fields.Url(required=True, description='User email address')
+    'email': fields.String(required=True, description='User email address')
 })
 
 user_data_container = api.inherit('User data container', {
