@@ -26,7 +26,7 @@ deal_minimal = api.model('Deal minimal', {
 })
 
 deal_detail = api.inherit('Deal', deal_minimal, {
-    'description': fields.Url(required=True, description='Deal description')
+    'description': fields.String(required=True, description='Deal description')
 })
 
 deal_data_container = api.inherit('Deal data container', {
