@@ -160,7 +160,7 @@ class SensorItem(Resource):
         Delete sensor
         """
 
-        sensor = User.get(id=id, ignore=404)
+        sensor = Device.get(id=id, ignore=404)
 
         if sensor is None:
             abort(404, 'Sensor not found.')
