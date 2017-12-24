@@ -14,8 +14,8 @@ class Config:
     TOKEN_EXPIRATION_TIME = 6000
     RESTPLUS_SWAGGER_UI_DOC_EXPANSION = 'list'
     RESTPLUS_VALIDATE = True
-    CELERY_BROKER_URL = 'redis://vps475171.ovh.net:6379/0'
-    CELERY_RESULT_BACKEND = 'redis://vps475171.ovh.net:6379/0'
+    CELERY_BROKER_URL = ''
+    CELERY_RESULT_BACKEND = ''
 
     MAIL_SERVER = 'smtp.googlemail.com'
     MAIL_PORT = 465
