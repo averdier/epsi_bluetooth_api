@@ -45,7 +45,7 @@ class DevelopmentConfig(Config):
     Development configuration
     """
     DEBUG = True
-    ELASTICSEARCH_HOST = "http://vps475171.ovh.net"
+    ELASTICSEARCH_HOST = "localhost"
     RESTPLUS_MASK_SWAGGER = False
     RESTPLUS_ERROR_404_HELP = True
 
