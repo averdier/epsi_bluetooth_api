@@ -20,7 +20,7 @@ flask-restplus==0.10.1
 greenlet==0.4.12
 idna==2.6
 itsdangerous==0.24
-Jinja2==2.10
+Jinja2==2.11.3
 jsonschema==2.6.0
 kombu==4.1.0
 MarkupSafe==1.0
